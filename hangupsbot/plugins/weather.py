@@ -28,10 +28,12 @@ def _handle_weather(bot, event, command):
     else:
         raise RuntimeError("unhandled event type")
 
-    if event.text.lower() in ['h', 'help']:
+    text = event.text.lower().strip()
+
+    if text in ['he', 'hel', 'help']:
       message = 'w : weather \n <4 digital> : taiwan stock \n'
       yield from mysend_reply(bot, event, message)
-    if event.texti.lower() in ['w', 'W', 'weather', 'Weather', 'WEATHER']:
+    if text in ['w', 'W', 'weather', 'Weather', 'WEATHER']:
       message = u"天氣" + get_weather_string('taipei')
       #bot.coro_send_message(event.conv, "get " + event.text)
       #bot.coro_send_message(event.conv, message)
