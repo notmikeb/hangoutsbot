@@ -6,9 +6,20 @@
     [
       [
         "hi bot",
+        "hi",
+        "h",
+        "hello",
         "hello bot"
       ],
       "Hello world!"
+    ]
+    ,
+    [
+      [
+       "a",
+       "b", 
+      ],
+      "I am a bot !"
     ]
   ],
   "commands_user": [],
@@ -17,7 +28,6 @@
     "CONV_ID": {
       "autoreplies_enabled": false,
       "commands_enabled": false,
-      "silentmode": true
     }
   },
   "link_to_guide": "https://github.com/hangoutsbot/hangoutsbot/wiki/User-Guide",

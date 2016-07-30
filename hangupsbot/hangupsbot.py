@@ -23,6 +23,9 @@ from hangups_conversation import (HangupsConversation, FakeConversation)
 from commands import command
 from permamem import conversation_memory
 from utils import simple_parse_to_segments, class_from_name
+from time import sleep
+
+sleep(5)
 
 
 gettext.install('hangupsbot', localedir=os.path.join(os.path.dirname(__file__), 'locale'))
@@ -298,7 +301,7 @@ class HangupsBot(object):
                 _cached = self.memory.get_by_path(["user_data", chat_id, "_hangups"])
 
                 hangups_user = hangups.user.User(
-                    UserID, 
+                    UserID,
                     _cached["full_name"],
                     _cached["first_name"],
                     _cached["photo_url"],
@@ -577,7 +580,7 @@ class HangupsBot(object):
 
         event = ConversationEvent(self, conv_event)
 
-        yield from self.conversations.update(self._conv_list.get(conv_event.conversation_id), 
+        yield from self.conversations.update(self._conv_list.get(conv_event.conversation_id),
                                              source="event")
 
         if isinstance(conv_event, hangups.ChatMessageEvent):
@@ -965,7 +968,7 @@ def main():
                         help=_('show program\'s version number and exit'))
     args = parser.parse_args()
 
-    
+
 
     # Create all necessary directories.
     for path in [args.log, args.cookies, args.config, args.memory]:
