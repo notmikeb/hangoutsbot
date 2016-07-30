@@ -4,13 +4,27 @@ import asyncio, re, logging, json, random
 import hangups
 
 import plugins
+import time
 
 
 logger = logging.getLogger(__name__)
 
 def _initialise(bot):
     plugins.register_handler(_handle_weather, type="message")
-    plugins.register_admin_command(["weather"])
+    plugins.register_admin_command(["weather", "runcode"])
+    plugins.start_asyncio_task(_delay_notify_admins, bot)
+
+
+@asyncio.coroutine
+def _delay_notify_admins(bot, args):
+    admin_key = "admins"
+    global_admins = bot.get_config_option(admin_key) or {}
+    if global_admins:
+      for admin in global_admins:
+        logger.info("admin {}".format(admin))      
+        c = bot.get_1on1_conversation(admin)
+        if c: 
+          bot.send_message(c, "hi I am online at " + time.asctime())
 
 
 def _handle_weather(bot, event, command):
@@ -39,6 +53,13 @@ def _handle_weather(bot, event, command):
       #bot.coro_send_message(event.conv, message)
       yield from mysend_reply(bot, event, message)
       logger.error('location is {} msg len is {}'.format('taipei', message))
+    elif text in ['t', 'ti', 'tim', 'time']:
+      message = "Time " + time.asctime()
+      logger.info( "event.conv {} ".format(event.conv))
+      yield from mysend_reply(bot, event, message)
+    elif len(text) == 4 and text.isdigit():
+      message = get_stock_price(text)
+      yield from mysend_reply(bot, event, message)
     else:
       logger.error('event.text weather is {}'.format(event.text))
     logger.error('Done event.text weather is {}'.format(event.text))
@@ -68,7 +89,7 @@ def get_weather_string(input_location):
         input_location = 'taipei'
     output=fetchHTML(input_location)
     data = json.loads(''.join([chr(i) for i in output]))
-    
+
     result = str( "Location: " + str(data['list'][0]['name']) +
     "\nCountry: " + str(data['list'][0]['name']) + "\nLatitude: " + str(data['list'][0]['coord']['lat'])+
     "\nLongitude: " +str(data['list'][0]['coord']['lon']) + "\nTemperature: "+str(data['list'][0]['main']['temp']-273.15) +" C"+
@@ -77,7 +98,7 @@ def get_weather_string(input_location):
     "\nWind Speed: " + str(data['list'][0]['wind']['speed']) + " mps" +
     "\nWeather Description: " + str(data['list'][0]['weather'][0]['description']) )
     return result
-    
+
 
 @asyncio.coroutine
 def mysend_reply(bot, event, message):
@@ -103,18 +124,59 @@ def mysend_reply(bot, event, message):
     return True
 
 
-#def _words_in_text(word, text):
-#    """Return True if word is in text"""
-#
-#    if word.startswith("regex:"):
-#        word = word[6:]
-#    else:
-#        word = re.escape(word)
-#
-#    regexword = "(?<!\w)" + word + "(?!\w)"
-#
-#    return True if re.search(regexword, text, re.IGNORECASE) else False
-#
+import urllib
+import urllib.request
+import bs4
+
+
+import yahoo_finance
+
+def get_stock_price(stock_no):
+    result = ""
+    x = yahoo_finance.Share( stock_no[:4] + '.TW')
+    if x.get_price():
+      result += x.get_trade_datetime() + "\n"
+      result += u'價格: '+ x.get_price() + "\n"
+      result += u'昨天價格: '+ x.get_prev_close() + "\n"
+      result += u'開盤價格: '+ x.get_open() + "\n"
+
+
+      url = 'http://www.cmoney.tw/finance/f00025.aspx?s=' + stock_no[:4]
+      b = urllib.request.urlopen(url)
+      d = b.readall()
+      s = bs4.BeautifulSoup(d, "html.parser")
+      if s and s.title and s.title.string:
+        i = s.title.string.find('-')
+        result += s.title.string[:i].strip() + "\n"
+    else:
+        result += "Stock {} NOT Found !".format(stock_no[:4])
+
+    return result
+
+def runcode(bot, event, cmd=None, *args):
+    """ runcode <source code>
+    """
+    message = ""
+    if cmd and len(cmd) > 0:
+      if args and len(args) > 0:
+        logger.info("cmd {} len:{} args:".format(cmd, len(cmd)) )
+      else:
+        logger.info("cmd {} no args len:{}".format(cmd, len(cmd)))
+      if cmd[0] == '"' and cmd[-1] == '"':
+         cmd = cmd[1:-1]
+      c = compile(cmd, 'None', 'exec')
+    
+      try:
+         p = eval(c)
+         message += str(p)
+      except Exception:
+         message += str(e)
+      html = "<b>{}</b>".format(message)
+    else:
+      html = "<b>weather config:</b> <br /> {}".format(value)
+
+    yield from bot.coro_send_message(event.conv_id, html)
+       
 
 def weather(bot, event, cmd=None, *args):
     """adds or removes an autoreply.
