@@ -24,6 +24,7 @@ def _delay_notify_admins(bot, args):
         logger.info("admin {}".format(admin))      
         c = bot.get_1on1_conversation(admin)
         if c: 
+          logger.info("c {}".format(c))      
           bot.send_message(c, "hi I am online at " + time.asctime())
 
 
@@ -43,6 +44,7 @@ def _handle_weather(bot, event, command):
         raise RuntimeError("unhandled event type")
 
     text = event.text.lower().strip()
+    message = ''
 
     if text in ['he', 'hel', 'help']:
       message = 'w : weather \n <4 digital> : taiwan stock \n'
@@ -60,6 +62,14 @@ def _handle_weather(bot, event, command):
     elif len(text) == 4 and text.isdigit():
       message = get_stock_price(text)
       yield from mysend_reply(bot, event, message)
+    elif text in ["me"]:
+      yield from sendtwice(bot, event, message)
+    elif text in ['count']:
+      message = 'count '
+      yield from send_count(bot, event, message)
+    elif text in ['to', 'todo']:
+      message = 'wunderlist todo'
+      yield from send_todo_list(bot, event, message)
     else:
       logger.error('event.text weather is {}'.format(event.text))
     logger.error('Done event.text weather is {}'.format(event.text))
@@ -173,7 +183,7 @@ def runcode(bot, event, cmd=None, *args):
          message += str(e)
       html = "<b>{}</b>".format(message)
     else:
-      html = "<b>weather config:</b> <br /> {}".format(value)
+      html = "<b>runcode:</b> <br /> {}".format(value)
 
     yield from bot.coro_send_message(event.conv_id, html)
        
@@ -217,3 +227,81 @@ def weather(bot, event, cmd=None, *args):
         html = "<b>weather config:</b> <br /> {}".format(value)
 
     yield from bot.coro_send_message(event.conv_id, html)
+
+def mysend_message(bot, event, message):
+    logger.info("mysend_message :{}".format(message))
+    bot.send_message(event.conv_id, message)
+
+
+def get_todo_list(maxno):
+    client_id  = '8f2bd5d6ab84ea8df8e8'
+    client_secret = 'f1850a45b5e3a2689de61a05b71e447c9d6b510a96d9058b8fac751be985'
+    access_token = 'fa7b2df966a4bc58d6598fca2e2553bb7a427427983f2baa8a2fa01734f2'
+    import wunderpy2
+    api = wunderpy2.WunderApi()
+    client = api.get_client(access_token, client_id)    # Fill in your values
+    
+    max = 20
+    lists = client.get_lists()
+    result = ""
+    num = 0
+    for list in lists:
+      tasks = client.get_tasks(list['id'])
+      if len(tasks) > 0:
+        result += "=====list-title:{}\n".format(list['title'][:max])
+        if len(tasks) > 0:
+          for task in tasks:
+            num += 1
+            result += "task-id:{}\n".format(task['id'])
+            result += "task-title:{}\n".format(task['title'][:max])
+            notes = client.get_task_notes(task['id'])
+            if len(notes) > 0:
+              for note in notes:
+                if len(note['content']) > 0:
+                  result += "note-content:{}".format(note['content'][:max])
+            result += "\n"
+            if num > maxno:
+               result += "====="
+               return result
+        result += "=====" 
+    return result
+
+@asyncio.coroutine
+def send_todo_list(bot, event, message):
+  #https://developer.wunderlist.com/apps
+  global t2, todo
+  import time
+
+  t1 = time.time()
+  if 'todo' not in globals():
+     todo = ""
+  if 't2' not in globals():
+     t2 = 0 
+  if (t1-t2) < 60:
+     #use result
+     logger.info('Use the old result')
+     pass
+  else:   
+    yield from mysend_reply(bot, event, "Prepare the wunderlist of todo items\nPlease wait\n") 
+    # get max 3 records from todo lists
+    result = get_todo_list(3)
+    
+    t2 = time.time()
+    result += "\nTakes {0:.2f} sec\n".format(t2-t1)
+    todo = result
+    logger.info("Get wonderlist len:{}".format(len(result)))
+  # send the result
+  logger.info("yield to mysend_reply by get_todo_list")
+  yield from mysend_reply(bot, event, todo) 
+
+@asyncio.coroutine
+def send_count(bot, event, message):
+  for count in range(10):
+     yield from mysend_reply(bot, event, message + str(count) ) 
+
+@asyncio.coroutine
+def sendtwice(bot, event, message):
+  import time
+  yield from mysend_reply(bot, event, message +" first") 
+  time.sleep(5)
+  yield from mysend_reply(bot, event, message + " second") 
