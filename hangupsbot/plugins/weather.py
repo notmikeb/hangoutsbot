@@ -74,17 +74,6 @@ def _handle_weather(bot, event, command):
       logger.error('event.text weather is {}'.format(event.text))
     logger.error('Done event.text weather is {}'.format(event.text))
 
-#            if isinstance(kwds, list):
-#                for kw in kwds:
-#                    if _words_in_text(kw, event.text) or kw == "*":
-#                        logger.info("matched chat: {}".format(kw))
-#                        yield from send_reply(bot, event, message)
-#                        break
-#
-#            elif event_type == kwds:
-#                logger.info("matched event: {}".format(kwds))
-#                yield from send_reply(bot, event, message)
-#
 import json,  urllib
 import urllib.request
 
@@ -106,7 +95,8 @@ def get_weather_string(input_location):
     "\nHumidity: " + str(data['list'][0]['main']['humidity']) + " %"+
     "\nPressure: " + str(data['list'][0]['main']['pressure']) + " hPa"+
     "\nWind Speed: " + str(data['list'][0]['wind']['speed']) + " mps" +
-    "\nWeather Description: " + str(data['list'][0]['weather'][0]['description']) )
+    "\nWeather Description: " + str(data['list'][0]['weather'][0]['description']+ "\n\nhttps://tw.news.yahoo.com/weather/\n\n") )
+
     return result
 
 
@@ -158,6 +148,7 @@ def get_stock_price(stock_no):
       if s and s.title and s.title.string:
         i = s.title.string.find('-')
         result += s.title.string[:i].strip() + "\n"
+      result += "\n\n{}\n\n".format(url)
     else:
         result += "Stock {} NOT Found !".format(stock_no[:4])
 
@@ -241,24 +232,24 @@ def get_todo_list(maxno):
     api = wunderpy2.WunderApi()
     client = api.get_client(access_token, client_id)    # Fill in your values
     
-    max = 20
+    max = 50
     lists = client.get_lists()
-    result = ""
+    result = "https://www.wunderlist.com/webapp#/lists/inbox\n\n"
     num = 0
     for list in lists:
       tasks = client.get_tasks(list['id'])
       if len(tasks) > 0:
-        result += "=====list-title:{}\n".format(list['title'][:max])
+        result += "=====list-title= {}\n".format(list['title'][:max])
         if len(tasks) > 0:
           for task in tasks:
             num += 1
-            result += "task-id:{}\n".format(task['id'])
-            result += "task-title:{}\n".format(task['title'][:max])
+            result += "task-title= {}  ".format(task['title'][:max])
+            result += "task-id= {}\n".format(task['id'])
             notes = client.get_task_notes(task['id'])
             if len(notes) > 0:
               for note in notes:
                 if len(note['content']) > 0:
-                  result += "note-content:{}".format(note['content'][:max])
+                  result += "note-content= \n{}\n".format(note['content'][:max])
             result += "\n"
             if num > maxno:
                result += "====="
