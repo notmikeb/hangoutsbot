@@ -49,7 +49,7 @@ def _handle_weather(bot, event, command):
     if text in ['he', 'hel', 'help']:
       message = 'w : weather \n <4 digital> : taiwan stock \n'
       yield from mysend_reply(bot, event, message)
-    if text in ['w', 'W', 'weather', 'Weather', 'WEATHER']:
+    elif text in ['w', 'W', 'weather', 'Weather', 'WEATHER']:
       message = u"天氣" + get_weather_string('taipei')
       #bot.coro_send_message(event.conv, "get " + event.text)
       #bot.coro_send_message(event.conv, message)
@@ -70,9 +70,11 @@ def _handle_weather(bot, event, command):
     elif text in ['to', 'todo']:
       message = 'wunderlist todo'
       yield from send_todo_list(bot, event, message)
+    elif text.find('/bot') > 0:
+      logger.info('weather plugin igonre /bot')
     else:
-      logger.error('event.text weather is {}'.format(event.text))
-    logger.error('Done event.text weather is {}'.format(event.text))
+      logger.error('event.text weather echo {}'.format(event.text))
+      yield from mysend_reply(bot, event, "Unknow cmd do echo \n\n" + event.text)
 
 import json,  urllib
 import urllib.request
