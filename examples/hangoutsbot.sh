@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash
 ### BEGIN INIT INFO
 # Provides:          hangoutsbot
 # Required-Start:    $remote_fs $syslog
@@ -47,7 +47,7 @@ RUN_DIR=/var/run/$NAME
 ETC_DIR=/etc/$NAME
 CONF_FILE=$ETC_DIR/config.json
 MAX_RETRIES=1000 # Keep retrying for a long time
-DAEMON=/usr/local/bin/python3
+DAEMON=/usr/bin/python3
 DAEMON_ARGS="hangupsbot/hangupsbot.py --log /var/log/hangoutsbot.log --cookies $ETC_DIR/cookies.json --retries=$MAX_RETRIES --memory=$ETC_DIR/memory.json --config $ETC_DIR/config.json"
 HOMEDIR=/home/pi/hangoutsbot # Edit if different on your Raspberry Pi
 PIDFILE=$RUN_DIR/$NAME.pid
@@ -190,4 +190,6 @@ case "$1" in
 		;;
 esac
 
-:
+
+
+
